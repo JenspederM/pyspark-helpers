@@ -1,10 +1,11 @@
-from utils import get_logger
+from pyspark_helpers.utils import get_logger
 
 
 from collections import Counter
 from pathlib import Path
 from pyspark.sql.types import ArrayType, StructType
 from typing import Any, Dict, List, Optional, Union
+from datetime import datetime
 import json
 
 
@@ -57,10 +58,11 @@ def parse_value(value: Any) -> str:
         "float": "double",
         "bool": "boolean",
     }
+
     _type = type_map.get(type(value).__name__, "string")
 
     if _type == "integer":
-        if value > 2_147_483_647:
+        if value > 2147483647:
             _type = "long"
 
     return _type
@@ -139,27 +141,27 @@ def _get_pyspark_type(schema: Dict[str, Any]) -> Union[StructType, ArrayType]:
         raise ValueError("Schema must be dict or list.")
 
 
-def save_schema(
-    schema: Dict[str, Any], output: Union[str, Path], schema_path: Union[str, Path]
-) -> None:
+def save_schema(schema: Dict[str, Any], output: Union[str, Path]) -> None:
     """Save schema to file.
 
     Args:
         schema (Dict[str, Any]): Schema to save.
         output (Union[str, Path]): Output path.
     """
-    if isinstance(output, str) or isinstance(output, Path):
-        output_dir = output
+    if isinstance(output, str):
+        output = Path(output)
 
-    if isinstance(output_dir, str):
-        output_dir = Path(output)
-
-    if output_dir.exists() and not output_dir.is_dir():
-        raise ValueError("Output must be a directory.")
+    if output.exists() and not output.is_dir():
+        raise ValueError("A file already exists at the output path.")
+    elif output.is_dir():
+        output.mkdir(parents=True, exist_ok=True)
+        output_path = (
+            output / f"schema-{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.json"
+        )
     else:
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-    output_path = output_dir / schema_path.name
+        if not output.parent.exists():
+            output.parent.mkdir(parents=True, exist_ok=True)
+        output_path = output
 
     with open(output_path, "w") as f:
         json.dump(schema, f, indent=4)
@@ -179,7 +181,7 @@ def get_pyspark_schema(schema: Dict[str, Any]) -> Union[StructType, ArrayType]:
     try:
         logger.debug("Transforming schema to pyspark schema. {}".format(schema))
         pyspark_schema = pyspark_type.fromJson(schema)
-        logger.info(f"Successfully parsed schema: {str(pyspark_schema)}")
+        logger.debug(f"Successfully parsed schema: {str(pyspark_schema)}")
     except Exception as e:
         logger.error(e)
         # raise e
@@ -207,7 +209,7 @@ def load_json(path: Union[Path, str, List[Path], List[str]]) -> Union[List[dict]
         else:
             return [load_json(p) for p in path]
 
-    with open(path) as f:
+    with open(path, "r") as f:
         data = json.load(f)
 
     return data
@@ -252,7 +254,7 @@ def schema_from_json(
     schema = parse_json(data)
 
     if output is not None:
-        save_schema(schema, output, schema_path)
+        save_schema(schema, output)
 
     if to_pyspark is True:
         return get_pyspark_schema(schema)
@@ -284,3 +286,35 @@ def bulk_schema_from_json(
         schemas.append(schema)
 
     return schemas
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--schema_path",
+        type=str,
+        required=True,
+        help="Path to schema file.",
+    )
+    parser.add_argument(
+        "--to_pyspark",
+        type=bool,
+        default=False,
+        help="Transform schema to pyspark schema.",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default=None,
+        help="Path to save schema.",
+    )
+
+    args = parser.parse_args()
+
+    schema = schema_from_json(
+        args.schema_path, to_pyspark=args.to_pyspark, output=args.output
+    )
+
+    print(schema)

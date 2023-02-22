@@ -6,9 +6,10 @@ authors = ["Jens Peder Meldgaard <jenspederm@gmail.com>"]
 readme = "README.md"
 packages = [
     {include = "pyspark_helpers"},
-    {include = "schema", from = "src"},
-    {include = "utils", from = "src"},
 ]
+
+[tool.poetry.scripts]
+schema-from-json = "pyspark_helpers.schema"
 
 [tool.poetry.dependencies]
 python = "^3.8"

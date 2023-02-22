@@ -57,7 +57,7 @@ def test_get_value_type():
 
 
 def json_tests():
-    return [l for l in Path("json_tests").rglob("*.json")]
+    return [l for l in Path("json_tests").rglob("./data/schema/*.json")]
 
 
 @pytest.mark.parametrize("test", json_tests())
