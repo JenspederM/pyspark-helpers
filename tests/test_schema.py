@@ -1,6 +1,3 @@
-from pathlib import Path
-
-import pytest
 from pyspark_helpers.schema import (
     _recurse_schema,
     parse_array,
@@ -8,15 +5,46 @@ from pyspark_helpers.schema import (
     parse_value,
     schema_from_json,
 )
-
 from pyspark_helpers.utils import get_logger
 
-logger = get_logger(__name__, "INFO")
+from pyspark.sql.types import ArrayType, StructType
+from pathlib import Path
+from datetime import datetime
+
+
+logger = get_logger(__name__)
+
+DATA = Path("./tests/data/schema/")
+RESULTS = Path("./tests/results/schema/")
+RESULTS.mkdir(parents=True, exist_ok=True)
+TESTS = [l for l in DATA.rglob("*.json")]
+NOW = datetime.now().strftime("%Y%m%d%H%M%S")
 
 
 def test_handle_array():
-    logger.info("Testing _handle_array")
+    logger.info("Testing filled array")
     test = ["test"]
+    schema = parse_array(test)
+    assert schema is not None
+    assert isinstance(schema, dict)
+    assert len(schema) > 0
+
+    logger.info("Testing empty array")
+    test = []
+    schema = parse_array(test)
+    assert schema is not None
+    assert isinstance(schema, dict)
+    assert len(schema) > 0
+
+    logger.info("Testing empty array of arrays")
+    test = [[[]]]
+    schema = parse_array(test)
+    assert schema is not None
+    assert isinstance(schema, dict)
+    assert len(schema) > 0
+
+    logger.info("Testing filled array of arrays")
+    test = [[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]
     schema = parse_array(test)
     assert schema is not None
     assert isinstance(schema, dict)
@@ -57,8 +85,7 @@ def test_get_value_type():
 
 
 def test_read_schema():
-    tests = [l for l in Path("data/schema/").rglob("*.json")]
-    for test in tests:
+    for test in TESTS:
         logger.info(f"Testing {test}")
         schema = schema_from_json(test, to_pyspark=False)
         assert schema is not None
@@ -68,11 +95,31 @@ def test_read_schema():
 
 def test_read_schema_transformed():
     logger.info("Testing read_schema")
-    tests = Path("json_tests").rglob("*.json")
-
-    for test in tests:
+    for test in TESTS:
         logger.info(f"Testing {test}")
         schema = schema_from_json(test, to_pyspark=True)
         assert schema is not None
+        assert isinstance(schema, StructType) or isinstance(schema, ArrayType)
+
+
+def test_output_json_schema():
+    logger.info("Testing output_json_schema")
+    for test in TESTS:
+        logger.info(f"Testing {test}")
+        schema = schema_from_json(
+            test, to_pyspark=False, output=f"{RESULTS}/{NOW}-{test.stem}-schema.json"
+        )
+        assert schema is not None
         assert isinstance(schema, dict)
         assert len(schema) > 0
+
+
+def test_output_python_schema():
+    logger.info("Testing output_json_schema")
+    for test in TESTS:
+        logger.info(f"Testing {test}")
+        schema = schema_from_json(
+            test, to_pyspark=True, output=f"{RESULTS}/{NOW}-{test.stem}-pyspark.py"
+        )
+        assert schema is not None
+        assert isinstance(schema, StructType) or isinstance(schema, ArrayType)
