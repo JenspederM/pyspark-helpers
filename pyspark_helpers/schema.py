@@ -82,6 +82,13 @@ def parse_array(value: List[Any]) -> dict:
     schemas = []
     contains_null = False
 
+    if len(value) == 0:
+        return {
+            "type": "array",
+            "elementType": "string",
+            "containsNull": True,
+        }
+
     for item in value:
         schema = {
             "type": "array",
@@ -190,12 +197,13 @@ def get_pyspark_schema(schema: Dict[str, Any]) -> Union[StructType, ArrayType]:
     """
     pyspark_type = _get_pyspark_type(schema)
     pyspark_schema = None
+
     try:
         logger.debug("Transforming schema to pyspark schema. {}".format(schema))
         pyspark_schema = pyspark_type.fromJson(schema)
         logger.debug(f"Successfully parsed schema: {str(pyspark_schema)}")
     except Exception as e:
-        logger.error(e)
+        logger.error("Schema parsing failed: ", e)
         # raise e
 
     return pyspark_schema
