@@ -21,13 +21,21 @@ pytest = "^7.2.1"
 tox = "^4.4.6"
 black = "^23.1.0"
 mypy = "^1.0.1"
-auto-changelog = "^0.6.0"
+commitizen = "^2.42.0"
 
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "INFO"
 log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
 log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.0.0"
+version_files = [
+    "pyproject.toml:version",
+]
 
 [build-system]
 requires = ["poetry-core"]
