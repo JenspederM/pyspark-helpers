@@ -22,7 +22,7 @@ poetry add pyspark_helpers
 Through cli:
 
 ```sh
-psh-schema-from-json -p ./tests/data/schema/array.json -o ./results/array_schema.json
+psh-schema-from-json --path ./tests/data/schema/array.json --output ./results/array_schema.json
 ```
 
 Or
@@ -44,5 +44,5 @@ files = [Path(f) for f in Path.glob(f"{data_dir}/*.json")]
 schemas = bulk_schema_from_jsom(files)
 
 for _file, schema in zip(files, schemas):
-    print(_file.name, schemas)
+    print(_file.name, schema)
 ```
