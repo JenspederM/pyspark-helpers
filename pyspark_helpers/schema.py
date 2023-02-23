@@ -288,7 +288,7 @@ def bulk_schema_from_json(
     return schemas
 
 
-if __name__ == "__main__":
+def main():
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -319,3 +319,7 @@ if __name__ == "__main__":
     schema = schema_from_json(args.path, to_pyspark=args.to_pyspark, output=args.output)
 
     print(schema)
+
+
+if __name__ == "__main__":
+    main()
