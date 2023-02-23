@@ -2,7 +2,6 @@
 
 A collection of tools to help when developing PySpark applications
 
-
 ## Installation
 
 With pip
@@ -22,10 +21,12 @@ poetry add pyspark_helpers
 Through cli:
 
 ```sh
+python -m pyspark_helpers.schema
+# OR with script
 psh-schema-from-json --path ./tests/data/schema/array.json --output ./results/array_schema.json
 ```
 
-Or
+Or programatically
 
 ```py
 from pyspark_helpers.schema import schema_from_json, bulk_schema_from_jsom
