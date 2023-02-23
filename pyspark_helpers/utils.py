@@ -1,6 +1,7 @@
 import logging
 import tempfile
 
+from typing import Tuple
 from pathlib import Path
 from pyspark.sql import SparkSession
 from delta import configure_spark_with_delta_pip
@@ -27,7 +28,7 @@ def get_logger(name: str) -> logging.Logger:
     return ROOT_LOGGER.getChild(name)
 
 
-def create_spark_session():
+def create_spark_session() -> Tuple[SparkSession, str]:
     logging.info("Configuring Spark session for testing environment")
     warehouse_dir = tempfile.TemporaryDirectory().name
     _builder = (

@@ -10,10 +10,10 @@ import json
 import re
 
 
-logger = get_logger(__name__)  # pragma: no cover
+logger = get_logger(__name__)
 
 
-def _recurse_schema(d: Dict[str, Any]) -> dict:  # pragma: no cover
+def _recurse_schema(d: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Recurse schema.
 
     Args:
@@ -25,7 +25,7 @@ def _recurse_schema(d: Dict[str, Any]) -> dict:  # pragma: no cover
     schema = []
 
     for key, value in d.items():
-        _value = {}
+        _value: Dict[str, Any] = {}
 
         if key != "fields":
             _value["name"] = key
@@ -69,7 +69,7 @@ def parse_value(value: Any) -> str:
     return _type
 
 
-def parse_array(value: List[Any]) -> dict:
+def parse_array(value: List[Any]) -> Dict[str, Any]:
     """Parse array.
 
     Args:
@@ -82,15 +82,8 @@ def parse_array(value: List[Any]) -> dict:
     schemas = []
     contains_null = False
 
-    if len(value) == 0:
-        return {
-            "type": "array",
-            "elementType": "string",
-            "containsNull": True,
-        }
-
     for item in value:
-        schema = {
+        schema: Dict[str, Any] = {
             "type": "array",
         }
         if isinstance(item, dict):
@@ -108,7 +101,11 @@ def parse_array(value: List[Any]) -> dict:
         count = Counter([json.dumps(s) for s in schemas])
         schema = json.loads(count.most_common(1)[0][0])
     else:
-        schema = []
+        schema = {
+            "type": "array",
+            "elementType": "string",
+            "containsNull": True,
+        }
 
     return schema
 
@@ -139,27 +136,41 @@ def _get_pyspark_type(schema: Dict[str, Any]) -> Union[StructType, ArrayType]:
 
     Returns:
         Union[StructType, ArrayType]: Transformed schema.
+
+    Raises:
+        ValueError: If schema is not a dict or list.
     """
     _type = schema.get("type", None)
+
+    ## We ignore the type because mypy doesn't know that the type is
+    ## StructType or ArrayType.
     if _type == "array":
-        return ArrayType
+        return ArrayType  # type: ignore
     elif _type == "struct":
-        return StructType
+        return StructType  # type: ignore
     else:
         raise ValueError("Schema must be dict or list.")
 
 
-def save_schema(schema: Dict[str, Any], output: Union[str, Path]) -> None:
+def save_schema(
+    schema: Union[Dict[str, Any], ArrayType, StructType],
+    output: Union[str, Path],
+    overwrite: bool = False,
+) -> None:
     """Save schema to file.
 
     Args:
         schema (Dict[str, Any]): Schema to save.
         output (Union[str, Path]): Output path.
+        overwrite (bool, optional): Overwrite existing file. Defaults to False.
+
+    Raises:
+        ValueError: If output is a file and overwrite is False.
     """
     if isinstance(output, str):
         output = Path(output)
 
-    if output.exists() and not output.is_dir():
+    if output.exists() and not output.is_dir() and not overwrite:
         raise ValueError("A file already exists at the output path.")
     elif output.is_dir():
         output.mkdir(parents=True, exist_ok=True)
@@ -175,7 +186,9 @@ def save_schema(schema: Dict[str, Any], output: Union[str, Path]) -> None:
         print("Saving schema as python file.")
         ext = "py"
 
-    with open(f"{output_path}.{ext}", "w") as f:
+    write_mode = "w" if not overwrite else "w+"
+
+    with open(f"{output_path}.{ext}", write_mode) as f:
         if ext == "json":
             json.dump(schema, f)
         else:
@@ -184,6 +197,8 @@ def save_schema(schema: Dict[str, Any], output: Union[str, Path]) -> None:
             unique_pyspark_types = ", ".join(set(["".join(t) for t in pyspark_types]))
             import_statement = f"from pyspark.sql.types import {unique_pyspark_types}"
             f.write("\n\n".join([import_statement, string_schema]))
+
+    return None
 
 
 def get_pyspark_schema(schema: Dict[str, Any]) -> Union[StructType, ArrayType]:
@@ -204,12 +219,13 @@ def get_pyspark_schema(schema: Dict[str, Any]) -> Union[StructType, ArrayType]:
         logger.debug(f"Successfully parsed schema: {str(pyspark_schema)}")
     except Exception as e:
         logger.error("Schema parsing failed: ", e)
+        raise e
         # raise e
 
     return pyspark_schema
 
 
-def load_json(path: Union[Path, str, List[Path], List[str]]) -> Union[List[dict], dict]:
+def load_json(path: Union[Path, str]) -> Dict[str, Any]:
     """Load json file.
 
     Args:
@@ -220,22 +236,13 @@ def load_json(path: Union[Path, str, List[Path], List[str]]) -> Union[List[dict]
     if isinstance(path, str):
         path = Path(path)
 
-    if isinstance(path, Path):
-        path = [path]
-
-    if isinstance(path, list):
-        if len(path) == 1:
-            path = path[0]
-        else:
-            return [load_json(p) for p in path]
-
     with open(path, "r") as f:
         data = json.load(f)
 
     return data
 
 
-def parse_json(data: Union[dict, list]) -> Union[dict, list]:
+def parse_json(data: Union[dict, list]) -> Dict[str, Any]:
     """Parse json file.
 
     Args:
@@ -254,53 +261,54 @@ def parse_json(data: Union[dict, list]) -> Union[dict, list]:
     return data
 
 
-import sys
-
-
 def schema_from_json(
-    schema_path: Union[str, Path],
+    path: Union[str, Path],
     to_pyspark: bool = False,
     output: Optional[Path] = None,
-) -> Union[dict, ArrayType, StructType]:
+    overwrite: bool = False,
+) -> Union[Dict[str, Any], ArrayType, StructType]:
     """Read schema file.
 
     Args:
-        schema_path (str): Path to schema file. Defaults to None.
+        path (str): Path to schema file. Defaults to None.
         to_pyspark (bool, optional): Transform schema to pyspark schema. Defaults to False.
         output (Optional[Path], optional): Saves schema as json to this path. Defaults to None.
+        overwrite (bool, optional): Overwrite existing file. Defaults to False.
 
     Returns:
         dict: Schema file as dictionary.
     """
 
-    data = load_json(schema_path)
+    data = load_json(path)
     schema = parse_json(data)
 
     if to_pyspark is True:
         pyspark_schema = get_pyspark_schema(schema)
-        print(type(pyspark_schema) is StructType)
+
         if output is not None:
-            save_schema(pyspark_schema, output)
+            save_schema(pyspark_schema, output, overwrite=overwrite)
 
         return pyspark_schema
 
     if output is not None:
-        save_schema(schema, output)
+        save_schema(schema, output, overwrite=overwrite)
 
-    return schema  # if transform is False else pyspark_schema  # pragma: no cover
+    return schema
 
 
 def bulk_schema_from_json(
-    files: List[Path],
+    files: Union[List[Path], List[str]],
     to_pyspark: bool = False,
     output: Optional[Path] = None,
-) -> Union[List[dict], List[ArrayType], List[StructType]]:
+    overwrite: bool = False,
+) -> List[Union[Dict[str, Any], ArrayType, StructType]]:
     """Read schema file.
 
     Args:
         files (List[Path]): List of paths to schema files.
         to_pyspark (bool, optional): Transform schema to pyspark schema. Defaults to False.
         output (Path, optional): Path to save schema. Defaults to None.
+        overwrite (bool, optional): Overwrite existing file. Defaults to False.
 
     Returns:
         Union[List[dict], List[ArrayType], List[StructType]]: List of schemas.
@@ -310,7 +318,9 @@ def bulk_schema_from_json(
 
     for _file in files:
         logger.info(f"Parsing {_file}")
-        schema = schema_from_json(_file, to_pyspark=to_pyspark, output=output)
+        schema = schema_from_json(
+            _file, to_pyspark=to_pyspark, output=output, overwrite=overwrite
+        )
         schemas.append(schema)
 
     return schemas
@@ -340,6 +350,12 @@ def main():
         type=str,
         default=None,
         help="Path to save schema.",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        default=False,
+        help="Overwrite existing file.",
     )
 
     args = parser.parse_args()
