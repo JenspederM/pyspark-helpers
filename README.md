@@ -28,22 +28,21 @@ psh-schema-from-json -p ./tests/data/schema/array.json -o ./results/array_schema
 Or
 
 ```py
-from pyspark_helpers.schema import schema_from_jsom, bulk_schema_from_jsom
+from pyspark_helpers.schema import schema_from_json, bulk_schema_from_jsom
 from pathlib import Path
 
 data_dir = "data/json"
 
 
 ## One file
-schema = schma_from_json(f"{data_dir}/file.json")
+schema = schema_from_json(f"{data_dir}/file.json")
 
 print(schema)
 
 ## A whole directory
 files = [Path(f) for f in Path.glob(f"{data_dir}/*.json")]
-schems = bulk_schema_from_jsom(files)
+schemas = bulk_schema_from_jsom(files)
 
 for _file, schema in zip(files, schemas):
     print(_file.name, schemas)
-
 ```
