@@ -41,7 +41,7 @@ version_files = [
 [tool.black]
 line-length = 88  # Specify the line length
 target-version = ['py37']  # Specify your Python version
-include = '\.pyi?$'
+include = "pyspark_helpers"  # Include the files that should be formatted
 exclude = '''  # Specify the files/dirs that should be ignored by the black formatter
 /(
     \.eggs
