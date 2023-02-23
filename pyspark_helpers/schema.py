@@ -293,19 +293,22 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--schema_path",
+        "--path",
+        "-p",
         type=str,
         required=True,
         help="Path to schema file.",
     )
     parser.add_argument(
         "--to_pyspark",
+        "-t",
         type=bool,
         default=False,
         help="Transform schema to pyspark schema.",
     )
     parser.add_argument(
         "--output",
+        "-o",
         type=str,
         default=None,
         help="Path to save schema.",
@@ -313,8 +316,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    schema = schema_from_json(
-        args.schema_path, to_pyspark=args.to_pyspark, output=args.output
-    )
+    schema = schema_from_json(args.path, to_pyspark=args.to_pyspark, output=args.output)
 
     print(schema)
