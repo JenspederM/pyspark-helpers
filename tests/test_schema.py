@@ -56,17 +56,14 @@ def test_get_value_type():
         assert _type == key
 
 
-def json_tests():
-    return [l for l in Path("json_tests").rglob("./data/schema/*.json")]
-
-
-@pytest.mark.parametrize("test", json_tests())
-def test_read_schema(test):
-    logger.info(f"Testing {test}")
-    schema = schema_from_json(test, to_pyspark=False)
-    assert schema is not None
-    assert isinstance(schema, dict)
-    assert len(schema) > 0
+def test_read_schema():
+    tests = [l for l in Path("data/schema/").rglob("*.json")]
+    for test in tests:
+        logger.info(f"Testing {test}")
+        schema = schema_from_json(test, to_pyspark=False)
+        assert schema is not None
+        assert isinstance(schema, dict)
+        assert len(schema) > 0
 
 
 def test_read_schema_transformed():

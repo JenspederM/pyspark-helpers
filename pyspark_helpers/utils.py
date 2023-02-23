@@ -1,4 +1,9 @@
 import logging
+import tempfile
+
+from pathlib import Path
+from pyspark.sql import SparkSession
+from delta import configure_spark_with_delta_pip
 
 
 def get_logger(name: str, log_level="INFO") -> logging.Logger:
@@ -19,3 +24,20 @@ def get_logger(name: str, log_level="INFO") -> logging.Logger:
         handlers=[logging.StreamHandler()],
     )
     return logging.getLogger(name)
+
+
+def create_spark_session():
+    logging.info("Configuring Spark session for testing environment")
+    warehouse_dir = tempfile.TemporaryDirectory().name
+    _builder = (
+        SparkSession.builder.master("local[1]")
+        .config("spark.hive.metastore.warehouse.dir", Path(warehouse_dir).as_uri())
+        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+        .config(
+            "spark.sql.catalog.spark_catalog",
+            "org.apache.spark.sql.delta.catalog.DeltaCatalog",
+        )
+    )
+    spark: SparkSession = configure_spark_with_delta_pip(_builder).getOrCreate()
+    logging.info("Spark session configured")
+    return spark, warehouse_dir

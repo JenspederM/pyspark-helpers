@@ -9,11 +9,12 @@ packages = [
 ]
 
 [tool.poetry.scripts]
-schema-from-json = "pyspark_helpers.schema"
+psh-schema-from-json = "pyspark_helpers.schema:main"
 
 [tool.poetry.dependencies]
 python = "^3.8"
 pyspark = "^3.3.2"
+delta-spark = "^2.2.0"
 
 
 [tool.poetry.group.dev.dependencies]
