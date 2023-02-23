@@ -7,6 +7,7 @@ from pyspark.sql.types import ArrayType, StructType
 from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
 import json
+import re
 
 
 logger = get_logger(__name__)  # pragma: no cover
@@ -159,7 +160,7 @@ def save_schema(schema: Dict[str, Any], output: Union[str, Path]) -> None:
     else:
         if not output.parent.exists():
             output.parent.mkdir(parents=True, exist_ok=True)
-        output_path = output.name.split(".")[0]
+        output_path = output.parent / output.stem
 
     ext = "json"
 
@@ -171,7 +172,11 @@ def save_schema(schema: Dict[str, Any], output: Union[str, Path]) -> None:
         if ext == "json":
             json.dump(schema, f)
         else:
-            f.write(str(schema))
+            string_schema = str(schema)
+            pyspark_types = re.findall(r"([A-Z]\w+)(Type|Field)", string_schema)
+            unique_pyspark_types = ", ".join(set(["".join(t) for t in pyspark_types]))
+            import_statement = f"from pyspark.sql.types import {unique_pyspark_types}"
+            f.write("\n\n".join([import_statement, string_schema]))
 
 
 def get_pyspark_schema(schema: Dict[str, Any]) -> Union[StructType, ArrayType]:
@@ -317,7 +322,7 @@ def main():
     parser.add_argument(
         "--to_pyspark",
         "-t",
-        type=bool,
+        action="store_true",
         default=False,
         help="Transform schema to pyspark schema.",
     )
