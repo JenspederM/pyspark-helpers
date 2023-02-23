@@ -18,7 +18,6 @@ DATA = Path("./tests/data/schema/")
 RESULTS = Path("./tests/results/schema/")
 RESULTS.mkdir(parents=True, exist_ok=True)
 TESTS = [l for l in DATA.rglob("*.json")]
-NOW = datetime.now().strftime("%Y%m%d%H%M%S")
 
 
 def test_handle_array():
@@ -107,7 +106,10 @@ def test_output_json_schema():
     for test in TESTS:
         logger.info(f"Testing {test}")
         schema = schema_from_json(
-            test, to_pyspark=False, output=f"{RESULTS}/{NOW}-{test.stem}-schema.json"
+            test,
+            to_pyspark=False,
+            output=f"{RESULTS}/{test.stem}-schema.json",
+            overwrite=True,
         )
         assert schema is not None
         assert isinstance(schema, dict)
@@ -119,7 +121,10 @@ def test_output_python_schema():
     for test in TESTS:
         logger.info(f"Testing {test}")
         schema = schema_from_json(
-            test, to_pyspark=True, output=f"{RESULTS}/{NOW}-{test.stem}-pyspark.py"
+            test,
+            to_pyspark=True,
+            output=f"{RESULTS}/{test.stem}-pyspark.py",
+            overwrite=True,
         )
         assert schema is not None
         assert isinstance(schema, StructType) or isinstance(schema, ArrayType)
