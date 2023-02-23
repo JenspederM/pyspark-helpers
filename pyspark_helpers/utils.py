@@ -5,8 +5,16 @@ from pathlib import Path
 from pyspark.sql import SparkSession
 from delta import configure_spark_with_delta_pip
 
+ROOT_LOGGER = logging.getLogger("pyspark_helpers")
 
-def get_logger(name: str, log_level="INFO") -> logging.Logger:
+logging.basicConfig(
+    format="[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
+    level="DEBUG",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+
+def get_logger(name: str) -> logging.Logger:
     """Get logger.
 
     Args:
@@ -16,14 +24,7 @@ def get_logger(name: str, log_level="INFO") -> logging.Logger:
     Returns:
         logging.Logger: Logger.
     """
-
-    logging.basicConfig(
-        format="[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
-        level=log_level,
-        datefmt="%Y-%m-%d %H:%M:%S",
-        handlers=[logging.StreamHandler()],
-    )
-    return logging.getLogger(name)
+    return ROOT_LOGGER.getChild(name)
 
 
 def create_spark_session():

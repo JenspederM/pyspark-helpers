@@ -9,7 +9,7 @@ from datetime import datetime
 import json
 
 
-logger = get_logger(__name__, "INFO")  # pragma: no cover
+logger = get_logger(__name__)  # pragma: no cover
 
 
 def _recurse_schema(d: Dict[str, Any]) -> dict:  # pragma: no cover
