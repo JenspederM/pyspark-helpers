@@ -155,16 +155,23 @@ def save_schema(schema: Dict[str, Any], output: Union[str, Path]) -> None:
         raise ValueError("A file already exists at the output path.")
     elif output.is_dir():
         output.mkdir(parents=True, exist_ok=True)
-        output_path = (
-            output / f"schema-{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.json"
-        )
+        output_path = output / f"schema-{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     else:
         if not output.parent.exists():
             output.parent.mkdir(parents=True, exist_ok=True)
-        output_path = output
+        output_path = output.name.split(".")[0]
 
-    with open(output_path, "w") as f:
-        json.dump(schema, f, indent=4)
+    ext = "json"
+
+    if type(schema) is ArrayType or type(schema) is StructType:
+        print("Saving schema as python file.")
+        ext = "py"
+
+    with open(f"{output_path}.{ext}", "w") as f:
+        if ext == "json":
+            json.dump(schema, f)
+        else:
+            f.write(str(schema))
 
 
 def get_pyspark_schema(schema: Dict[str, Any]) -> Union[StructType, ArrayType]:
@@ -234,6 +241,9 @@ def parse_json(data: Union[dict, list]) -> Union[dict, list]:
     return data
 
 
+import sys
+
+
 def schema_from_json(
     schema_path: Union[str, Path],
     to_pyspark: bool = False,
@@ -253,11 +263,16 @@ def schema_from_json(
     data = load_json(schema_path)
     schema = parse_json(data)
 
+    if to_pyspark is True:
+        pyspark_schema = get_pyspark_schema(schema)
+        print(type(pyspark_schema) is StructType)
+        if output is not None:
+            save_schema(pyspark_schema, output)
+
+        return pyspark_schema
+
     if output is not None:
         save_schema(schema, output)
-
-    if to_pyspark is True:
-        return get_pyspark_schema(schema)
 
     return schema  # if transform is False else pyspark_schema  # pragma: no cover
 
