@@ -47,3 +47,29 @@ schemas = bulk_schema_from_jsom(files)
 for _file, schema in zip(files, schemas):
     print(_file.name, schema)
 ```
+
+## Guidelies for Contributing
+
+Use [Conventional Commit](https://www.conventionalcommits.org/en/v1.0.0/) messages. 
+
+To help with this, I encourage you to use commitizen when making your commits. The process for this is straight forward:
+
+```sh
+# Checkout a new branch
+git checkout -b <my-new-branch>
+
+# Make changes to the code....
+
+# Add your changes
+git add <changed-file-1> <changed-file-2> ...
+
+# Run commitizen commit and follow prompts
+cz commit
+
+# Push branch
+git push
+
+# Open a Pull Request
+## This is done in Github
+```
+
