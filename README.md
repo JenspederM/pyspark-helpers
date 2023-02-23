@@ -64,7 +64,7 @@ git checkout -b <my-new-branch>
 git add <changed-file-1> <changed-file-2> ...
 
 # Run commitizen commit and follow prompts
-cz commit
+commitizen commit # `cz c` in short
 
 # Push branch
 git push
