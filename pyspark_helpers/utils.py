@@ -20,7 +20,6 @@ def get_logger(name: str) -> logging.Logger:
 
     Args:
         name (str): Name of logger.
-        log_level (str, optional): Log level. Defaults to "INFO".
 
     Returns:
         logging.Logger: Logger.
@@ -29,6 +28,11 @@ def get_logger(name: str) -> logging.Logger:
 
 
 def create_spark_session() -> Tuple[SparkSession, str]:
+    """Create Spark session.
+    
+    Returns:
+        Tuple[SparkSession, str]: Spark session and warehouse directory.
+    """
     logging.info("Configuring Spark session for testing environment")
     warehouse_dir = tempfile.TemporaryDirectory().name
     _builder = (

@@ -302,7 +302,7 @@ def bulk_schema_from_json(
     output: Optional[Path] = None,
     overwrite: bool = False,
 ) -> List[Union[Dict[str, Any], ArrayType, StructType]]:
-    """Read schema file.
+    """Read schema file in bulk.
 
     Args:
         files (List[Path]): List of paths to schema files.
