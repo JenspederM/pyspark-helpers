@@ -29,7 +29,7 @@ def get_logger(name: str) -> logging.Logger:
 
 def create_spark_session() -> Tuple[SparkSession, str]:
     """Create Spark session.
-    
+
     Returns:
         Tuple[SparkSession, str]: Spark session and warehouse directory.
     """
