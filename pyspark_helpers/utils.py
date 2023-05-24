@@ -35,9 +35,10 @@ def create_spark_session() -> Tuple[SparkSession, str]:
     """
     logging.info("Configuring Spark session for testing environment")
     warehouse_dir = tempfile.TemporaryDirectory().name
+    warehouse_dir_uri = Path(warehouse_dir).as_uri()
     _builder = (
         SparkSession.builder.master("local[1]")
-        .config("spark.hive.metastore.warehouse.dir", Path(warehouse_dir).as_uri())
+        .config("spark.hive.metastore.warehouse.dir", warehouse_dir_uri)
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
         .config(
             "spark.sql.catalog.spark_catalog",
