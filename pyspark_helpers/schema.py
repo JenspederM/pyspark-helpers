@@ -3,7 +3,7 @@ from pyspark_helpers.utils import get_logger
 
 from collections import Counter
 from pathlib import Path
-from pyspark.sql.types import ArrayType, StructType
+import pyspark.sql.types as T
 from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
 import json
@@ -80,7 +80,7 @@ def parse_array(value: List[Any]) -> Dict[str, Any]:
     """
 
     schemas = []
-    contains_null = False
+    contains_null = any([item is None for item in value])
 
     for item in value:
         schema: Dict[str, Any] = {
@@ -128,14 +128,14 @@ def parse_struct(value: Dict[str, Any]) -> dict:
     return schema
 
 
-def _get_pyspark_type(schema: Dict[str, Any]) -> Union[StructType, ArrayType]:
+def _get_pyspark_type(schema: Dict[str, Any]) -> Union[T.StructType, T.ArrayType]:
     """Get transform schema.
 
     Args:
         schema (Dict[str, Any]): Schema to transform.
 
     Returns:
-        Union[StructType, ArrayType]: Transformed schema.
+        Union[T.StructType, T.ArrayType]: Transformed schema.
 
     Raises:
         ValueError: If schema is not a dict or list.
@@ -143,17 +143,17 @@ def _get_pyspark_type(schema: Dict[str, Any]) -> Union[StructType, ArrayType]:
     _type = schema.get("type", None)
 
     ## We ignore the type because mypy doesn't know that the type is
-    ## StructType or ArrayType.
+    ## T.StructType or T.ArrayType.
     if _type == "array":
-        return ArrayType  # type: ignore
+        return T.ArrayType  # type: ignore
     elif _type == "struct":
-        return StructType  # type: ignore
+        return T.StructType  # type: ignore
     else:
         raise ValueError("Schema must be dict or list.")
 
 
 def save_schema(
-    schema: Union[Dict[str, Any], ArrayType, StructType],
+    schema: Union[Dict[str, Any], T.ArrayType, T.StructType],
     output: Union[str, Path],
     overwrite: bool = False,
 ) -> None:
@@ -182,7 +182,7 @@ def save_schema(
 
     ext = "json"
 
-    if type(schema) is ArrayType or type(schema) is StructType:
+    if type(schema) is T.ArrayType or type(schema) is T.StructType:
         print("Saving schema as python file.")
         ext = "py"
 
@@ -201,14 +201,14 @@ def save_schema(
     return None
 
 
-def get_pyspark_schema(schema: Dict[str, Any]) -> Union[StructType, ArrayType]:
+def get_pyspark_schema(schema: Dict[str, Any]) -> Union[T.StructType, T.ArrayType]:
     """Transform schema to pyspark schema.
 
     Args:
         schema (Dict[str, Any]): Schema to transform.
 
     Returns:
-        Union[StructType, ArrayType]: Transformed schema.
+        Union[T.StructType, T.ArrayType]: Transformed schema.
     """
     pyspark_type = _get_pyspark_type(schema)
     pyspark_schema = None
@@ -264,9 +264,9 @@ def parse_json(data: Union[dict, list]) -> Dict[str, Any]:
 def schema_from_json(
     path: Union[str, Path],
     to_pyspark: bool = False,
-    output: Optional[Path] = None,
+    output: Optional[Union[str, Path]] = None,
     overwrite: bool = False,
-) -> Union[Dict[str, Any], ArrayType, StructType]:
+) -> Union[Dict[str, Any], T.ArrayType, T.StructType]:
     """Read schema file.
 
     Args:
@@ -301,7 +301,7 @@ def bulk_schema_from_json(
     to_pyspark: bool = False,
     output: Optional[Path] = None,
     overwrite: bool = False,
-) -> List[Union[Dict[str, Any], ArrayType, StructType]]:
+) -> List[Union[Dict[str, Any], T.ArrayType, T.StructType]]:
     """Read schema file in bulk.
 
     Args:
@@ -311,7 +311,7 @@ def bulk_schema_from_json(
         overwrite (bool, optional): Overwrite existing file. Defaults to False.
 
     Returns:
-        Union[List[dict], List[ArrayType], List[StructType]]: List of schemas.
+        Union[List[dict], List[T.ArrayType], List[T.StructType]]: List of schemas.
     """
 
     schemas = []
