@@ -1,10 +1,10 @@
 import logging
 import tempfile
-
-from typing import Tuple
 from pathlib import Path
-from pyspark.sql import SparkSession
+from typing import Tuple
+
 from delta import configure_spark_with_delta_pip
+from pyspark.sql import SparkSession
 
 ROOT_LOGGER = logging.getLogger("pyspark_helpers")
 
