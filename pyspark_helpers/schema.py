@@ -6,12 +6,18 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import black
-import isort
 import pyspark.sql.types as T
 
 from pyspark_helpers.utils import get_logger
 
 logger = get_logger(__name__)
+
+TYPE_MAP = {
+    "str": "string",
+    "int": "integer",
+    "float": "double",
+    "bool": "boolean",
+}
 
 
 def _recurse_schema(d: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -54,14 +60,8 @@ def parse_value(value: Any) -> str:
     Returns:
         str: Parsed value.
     """
-    type_map = {
-        "str": "string",
-        "int": "integer",
-        "float": "double",
-        "bool": "boolean",
-    }
 
-    _type = type_map.get(type(value).__name__, "string")
+    _type = TYPE_MAP.get(type(value).__name__, "string")
 
     if _type == "integer":
         if value > 2147483647:
@@ -197,7 +197,6 @@ def save_schema(
             import_statement = get_imports(string_schema)
             script = f"{import_statement}\n\n{string_schema}"
             res = black.format_str(script, mode=black.FileMode())
-            print("Formatted:", res)
             f.write(res)
 
     return script
@@ -209,10 +208,6 @@ def get_imports(string_schema):
 
     imports = ", ".join(unique_pyspark_types)
     import_statement = f"from pyspark.sql.types import {imports}"
-    print("Imports:", imports)
-    print("Sorted:", isort.code(string_schema))
-    print("Import statement:", import_statement)
-    print("Sorted import statement:", isort.code(import_statement))
     return import_statement
 
 
