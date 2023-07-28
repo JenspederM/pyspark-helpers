@@ -13,11 +13,11 @@ psh-schema-from-json = "pyspark_helpers.schema:main"
 python = "^3.8"
 pyspark = "^3.3.2"
 delta-spark = "^2.2.0"
+black = "^23.7.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.1"
 tox = "^4.4.6"
-black = "^23.1.0"
 mypy = "^1.0.1"
 commitizen = "^2.42.0"
 pre-commit = "^3.1.0"
