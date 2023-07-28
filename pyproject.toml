@@ -4,7 +4,7 @@ version = "0.1.4"
 description = "A collection of tools to help when developing PySpark applications"
 authors = ["Jens Peder Meldgaard <jenspederm@gmail.com>"]
 readme = "README.md"
-packages = [{include = "pyspark_helpers"}]
+packages = [{ include = "pyspark_helpers" }]
 
 [tool.poetry.scripts]
 psh-schema-from-json = "pyspark_helpers.schema:main"
@@ -36,6 +36,7 @@ profile = "black"
 name = "cz_conventional_commits"
 version = "0.1.4"
 version_files = ["pyproject.toml:version"]
+use_shortcuts = true
 
 [tool.black]
 line-length = 88 # Specify the line length
