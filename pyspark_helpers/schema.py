@@ -1,14 +1,15 @@
-from pyspark_helpers.utils import get_logger
-
-
-from collections import Counter
-from pathlib import Path
-import pyspark.sql.types as T
-from typing import Any, Dict, List, Optional, Union
-from datetime import datetime
 import json
 import re
+from collections import Counter
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
+import black
+import isort
+import pyspark.sql.types as T
+
+from pyspark_helpers.utils import get_logger
 
 logger = get_logger(__name__)
 
@@ -193,12 +194,26 @@ def save_schema(
             json.dump(schema, f)
         else:
             string_schema = str(schema)
-            pyspark_types = re.findall(r"([A-Z]\w+)(Type|Field)", string_schema)
-            unique_pyspark_types = ", ".join(set(["".join(t) for t in pyspark_types]))
-            import_statement = f"from pyspark.sql.types import {unique_pyspark_types}"
-            f.write("\n\n".join([import_statement, string_schema]))
+            import_statement = get_imports(string_schema)
+            script = f"{import_statement}\n\n{string_schema}"
+            res = black.format_str(script, mode=black.FileMode())
+            print("Formatted:", res)
+            f.write(res)
 
-    return None
+    return script
+
+
+def get_imports(string_schema):
+    pyspark_types = re.findall(r"([A-Z]\w+)(Type|Field)", string_schema)
+    unique_pyspark_types = set(["".join(t) for t in pyspark_types])
+
+    imports = ", ".join(unique_pyspark_types)
+    import_statement = f"from pyspark.sql.types import {imports}"
+    print("Imports:", imports)
+    print("Sorted:", isort.code(string_schema))
+    print("Import statement:", import_statement)
+    print("Sorted import statement:", isort.code(import_statement))
+    return import_statement
 
 
 def get_pyspark_schema(schema: Dict[str, Any]) -> Union[T.StructType, T.ArrayType]:
@@ -286,7 +301,8 @@ def schema_from_json(
         pyspark_schema = get_pyspark_schema(schema)
 
         if output is not None:
-            save_schema(pyspark_schema, output, overwrite=overwrite)
+            output = save_schema(pyspark_schema, output, overwrite=overwrite)
+            print(f"Schema saved to {output}")
 
         return pyspark_schema
 
