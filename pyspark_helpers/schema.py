@@ -297,7 +297,6 @@ def schema_from_json(
 
         if output is not None:
             output = save_schema(pyspark_schema, output, overwrite=overwrite)
-            print(f"Schema saved to {output}")
 
         return pyspark_schema
 

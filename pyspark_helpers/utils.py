@@ -7,7 +7,7 @@ from delta import configure_spark_with_delta_pip
 from pyspark.sql import SparkSession
 
 ROOT_LOGGER = logging.getLogger("pyspark_helpers")
-
+logging.getLogger("blib2to3").setLevel(logging.ERROR)
 logging.basicConfig(
     format="[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] %(message)s",
     level="DEBUG",
