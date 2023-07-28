@@ -191,15 +191,16 @@ def save_schema(
 
     with open(f"{output_path}.{ext}", write_mode) as f:
         if ext == "json":
-            json.dump(schema, f)
+            output = json.dumps(schema, indent=4)
         else:
             string_schema = str(schema)
             import_statement = get_imports(string_schema)
             script = f"{import_statement}\n\n{string_schema}"
-            res = black.format_str(script, mode=black.FileMode())
-            f.write(res)
+            output = black.format_str(script, mode=black.FileMode())
 
-    return script
+        f.write(output)
+
+        return output
 
 
 def get_imports(string_schema):
