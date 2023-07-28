@@ -1,4 +1,8 @@
-## Unreleased
+## 0.2.1 (2023-07-28)
+
+### Fix
+
+- **save_schema**: return string representation of output
 
 ## 0.2.0 (2023-07-28)
 
